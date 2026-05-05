@@ -2,17 +2,35 @@ import { signIn } from "@/auth";
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 w-full max-w-sm text-center">
+    <main className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-10 w-full max-w-sm text-center">
         <div className="mb-6">
-          <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
+          <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="Hibi logo"
+            >
+              <circle cx="32" cy="26" r="10" fill="#14B8A6" />
+              <line
+                x1="10"
+                y1="46"
+                x2="54"
+                y2="46"
+                stroke="#57534E"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">YouTube制限ビューア</h1>
-          <p className="text-sm text-gray-500 mt-2">
-            登録チャンネルから毎日1本だけ厳選してお届け
+          <h1 className="text-2xl font-bold text-stone-900 tracking-tight">Hibi</h1>
+          <p className="text-sm text-stone-500 mt-2 leading-relaxed">
+            登録チャンネルから毎日1本だけ
+            <br />
+            厳選してお届け
           </p>
         </div>
 
@@ -24,7 +42,7 @@ export default function LoginPage() {
         >
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors shadow-sm hover:shadow"
+            className="w-full flex items-center justify-center gap-3 bg-white border border-stone-300 hover:border-stone-400 text-stone-700 font-medium py-3 px-4 rounded-lg transition-colors shadow-sm hover:shadow"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -48,7 +66,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs text-stone-400 mt-4">
           YouTube読み取り権限のみ使用します
         </p>
       </div>

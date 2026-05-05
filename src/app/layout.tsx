@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YouTube制限ビューア",
+  title: "Hibi — 日々を整える、1日1本のYouTube",
   description: "登録チャンネルから毎日1本だけ厳選してお届け",
 };
 
