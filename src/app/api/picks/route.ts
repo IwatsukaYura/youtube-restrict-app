@@ -13,6 +13,7 @@ export async function GET() {
   }
 
   const db = createServiceClient();
+  // Generate picks for today if not already generated
   const picks = await generateDailyPicks(db, userId, accessToken);
 
   return NextResponse.json(picks);

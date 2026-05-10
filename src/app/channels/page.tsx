@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 type Channel = {
   id: string;
@@ -16,28 +16,35 @@ type Channel = {
 export default function ChannelsPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  //useCallbackを使用している理由：依存配列が変更されない限り、関数の再作成を防ぐため
   const loadChannels = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/channels");
-      if (!res.ok) throw new Error("チャンネルの取得に失敗しました");
+      const res = await fetch('/api/channels');
+      if (!res.ok) throw new Error('チャンネルの取得に失敗しました');
+
       const data: Channel[] = await res.json();
       setChannels(data);
-      setSelected(new Set(data.filter((c) => c.is_selected).map((c) => c.youtube_channel_id)));
+      setSelected(
+        new Set(
+          data.filter((c) => c.is_selected).map((c) => c.youtube_channel_id),
+        ),
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "エラーが発生しました");
+      setError(e instanceof Error ? e.message : 'エラーが発生しました');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // 初回レンダリングでチャンネルをロード
   useEffect(() => {
     loadChannels();
   }, [loadChannels]);
@@ -46,11 +53,11 @@ export default function ChannelsPage() {
     setIsSyncing(true);
     setError(null);
     try {
-      const res = await fetch("/api/channels/sync", { method: "POST" });
-      if (!res.ok) throw new Error("同期に失敗しました");
+      const res = await fetch('/api/channels/sync', { method: 'POST' });
+      if (!res.ok) throw new Error('同期に失敗しました');
       await loadChannels();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "同期エラーが発生しました");
+      setError(e instanceof Error ? e.message : '同期エラーが発生しました');
     } finally {
       setIsSyncing(false);
     }
@@ -60,14 +67,14 @@ export default function ChannelsPage() {
     setIsSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/channels", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/channels', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selected: Array.from(selected) }),
       });
-      if (!res.ok) throw new Error("保存に失敗しました");
+      if (!res.ok) throw new Error('保存に失敗しました');
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存エラーが発生しました");
+      setError(e instanceof Error ? e.message : '保存エラーが発生しました');
     } finally {
       setIsSaving(false);
     }
@@ -83,7 +90,7 @@ export default function ChannelsPage() {
   };
 
   const filteredChannels = channels.filter((c) =>
-    c.title.toLowerCase().includes(query.toLowerCase())
+    c.title.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
@@ -91,17 +98,22 @@ export default function ChannelsPage() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-400 hover:text-gray-700 transition-colors">
+            <Link
+              href="/"
+              className="text-gray-400 hover:text-gray-700 transition-colors"
+            >
               ← 戻る
             </Link>
-            <h1 className="text-lg font-semibold text-gray-900">チャンネル設定</h1>
+            <h1 className="text-lg font-semibold text-gray-900">
+              チャンネル設定
+            </h1>
           </div>
           <button
             onClick={syncChannels}
             disabled={isSyncing}
             className="text-sm bg-white border border-gray-300 hover:border-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSyncing ? "同期中..." : "チャンネルを同期"}
+            {isSyncing ? '同期中...' : 'チャンネルを同期'}
           </button>
         </div>
 
@@ -118,7 +130,11 @@ export default function ChannelsPage() {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setSelected(new Set(channels.map((c) => c.youtube_channel_id)))}
+                onClick={() =>
+                  setSelected(
+                    new Set(channels.map((c) => c.youtube_channel_id)),
+                  )
+                }
                 className="text-xs text-blue-600 hover:text-blue-800"
               >
                 全選択
@@ -144,12 +160,14 @@ export default function ChannelsPage() {
 
           <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto">
             {isLoading ? (
-              <div className="py-12 text-center text-sm text-gray-400">読み込み中...</div>
+              <div className="py-12 text-center text-sm text-gray-400">
+                読み込み中...
+              </div>
             ) : filteredChannels.length === 0 ? (
               <div className="py-12 text-center text-sm text-gray-400">
                 {channels.length === 0
-                  ? "チャンネルがありません。「チャンネルを同期」を押してください"
-                  : "該当するチャンネルがありません"}
+                  ? 'チャンネルがありません。「チャンネルを同期」を押してください'
+                  : '該当するチャンネルがありません'}
               </div>
             ) : (
               filteredChannels.map((channel) => (
@@ -172,7 +190,9 @@ export default function ChannelsPage() {
                       className="rounded-full flex-shrink-0"
                     />
                   )}
-                  <span className="text-sm text-gray-900 truncate">{channel.title}</span>
+                  <span className="text-sm text-gray-900 truncate">
+                    {channel.title}
+                  </span>
                 </label>
               ))
             )}
@@ -185,7 +205,7 @@ export default function ChannelsPage() {
             disabled={isSaving}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? "保存中..." : "変更を保存"}
+            {isSaving ? '保存中...' : '変更を保存'}
           </button>
         </div>
       </div>

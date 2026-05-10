@@ -1,11 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DailyPickWithDetails, YoutubeVideoMeta } from "@/types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { DailyPickWithDetails, YoutubeVideoMeta } from '@/types';
 import {
   fetchRecentVideoIds,
   fetchVideoMetas,
   fetchUploadsPlaylistId,
   isShorts,
-} from "@/lib/youtube";
+} from '@/lib/youtube';
 
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
@@ -30,14 +30,17 @@ type VideoDetail = {
   published_at: string;
 };
 
-export function getTodayJst(): string {
+function getTodayJst(): string {
   const now = new Date(Date.now() + JST_OFFSET_MS);
   return now.toISOString().slice(0, 10);
 }
 
-async function cacheVideos(db: SupabaseClient, metas: YoutubeVideoMeta[]): Promise<void> {
+async function cacheVideos(
+  db: SupabaseClient,
+  metas: YoutubeVideoMeta[],
+): Promise<void> {
   if (metas.length === 0) return;
-  await db.from("videos").upsert(
+  await db.from('videos').upsert(
     metas.map((m) => ({
       youtube_video_id: m.videoId,
       youtube_channel_id: m.channelId,
@@ -46,7 +49,7 @@ async function cacheVideos(db: SupabaseClient, metas: YoutubeVideoMeta[]): Promi
       duration_seconds: m.durationSeconds,
       published_at: m.publishedAt,
     })),
-    { onConflict: "youtube_video_id", ignoreDuplicates: true }
+    { onConflict: 'youtube_video_id', ignoreDuplicates: true },
   );
 }
 
@@ -55,16 +58,16 @@ async function decideVideoForChannel(
   channelId: string,
   uploadsPlaylistId: string,
   lastUsedDate: string,
-  accessToken: string
-): Promise<{ videoId: string; reason: "new" | "random" } | null> {
+  accessToken: string,
+): Promise<{ videoId: string; reason: 'new' | 'random' } | null> {
   const recent = await fetchRecentVideoIds(uploadsPlaylistId, accessToken, 50);
   const allVideoIds = recent.map((r) => r.videoId);
   if (allVideoIds.length === 0) return null;
 
   const { data: cached } = await db
-    .from("videos")
-    .select("youtube_video_id, duration_seconds, published_at")
-    .in("youtube_video_id", allVideoIds);
+    .from('videos')
+    .select('youtube_video_id, duration_seconds, published_at')
+    .in('youtube_video_id', allVideoIds);
 
   const cachedMetas: CachedVideoMeta[] = cached ?? [];
   const cachedIds = new Set(cachedMetas.map((m) => m.youtube_video_id));
@@ -90,26 +93,29 @@ async function decideVideoForChannel(
     .sort((a, b) => b.published_at.localeCompare(a.published_at));
 
   if (newVideos.length > 0) {
-    return { videoId: newVideos[0].youtube_video_id, reason: "new" };
+    return { videoId: newVideos[0].youtube_video_id, reason: 'new' };
   }
 
   const idx = Math.floor(Math.random() * nonShorts.length);
-  return { videoId: nonShorts[idx].youtube_video_id, reason: "random" };
+  return { videoId: nonShorts[idx].youtube_video_id, reason: 'random' };
 }
 
 async function ensurePlaylistId(
   db: SupabaseClient,
   channel: SelectedChannel,
-  accessToken: string
+  accessToken: string,
 ): Promise<string | null> {
   if (channel.uploads_playlist_id) return channel.uploads_playlist_id;
 
-  const playlistId = await fetchUploadsPlaylistId(channel.youtube_channel_id, accessToken);
+  const playlistId = await fetchUploadsPlaylistId(
+    channel.youtube_channel_id,
+    accessToken,
+  );
   if (playlistId) {
     await db
-      .from("channels")
+      .from('channels')
       .update({ uploads_playlist_id: playlistId })
-      .eq("youtube_channel_id", channel.youtube_channel_id);
+      .eq('youtube_channel_id', channel.youtube_channel_id);
   }
   return playlistId;
 }
@@ -119,7 +125,7 @@ function buildPicks(
   channelToVideoId: Map<string, string>,
   videoMap: Map<string, VideoDetail>,
   userId: string,
-  today: string
+  today: string,
 ): DailyPickWithDetails[] {
   const result: DailyPickWithDetails[] = [];
   for (const ch of channels) {
@@ -129,12 +135,12 @@ function buildPicks(
     if (!video) continue;
 
     result.push({
-      id: "",
+      id: '',
       userId,
       youtubeChannelId: ch.youtube_channel_id,
       youtubeVideoId: videoId,
       pickDate: today,
-      pickReason: "new",
+      pickReason: 'new',
       createdAt: new Date().toISOString(),
       channel: {
         youtubeChannelId: ch.youtube_channel_id,
@@ -153,44 +159,55 @@ function buildPicks(
   return result;
 }
 
+//user_sessionsテーブルからlast_used_dateを取得し、動画選定の基準日時とし、
+//channelsテーブルからユーザが選択したチャンネルを取得し、
+//該当チャンネルの
 export async function generateDailyPicks(
   db: SupabaseClient,
   userId: string,
-  accessToken: string
+  accessToken: string,
 ): Promise<DailyPickWithDetails[]> {
-  const today = getTodayJst();
+  const todayDate = getTodayJst();
 
   const [sessionRes, channelsRes] = await Promise.all([
-    db.from("user_sessions").select("last_used_date").eq("user_id", userId).single(),
     db
-      .from("channels")
-      .select("youtube_channel_id, title, thumbnail_url, uploads_playlist_id")
-      .eq("user_id", userId)
-      .eq("is_selected", true),
+      .from('user_sessions')
+      .select('last_used_date')
+      .eq('user_id', userId)
+      .single(),
+    db
+      .from('channels')
+      .select('youtube_channel_id, title, thumbnail_url, uploads_playlist_id')
+      .eq('user_id', userId)
+      .eq('is_selected', true),
   ]);
 
-  const lastUsedDate = sessionRes.data?.last_used_date ?? "1970-01-01";
+  // 初回ログインユーザはuser_sessionsテーブルにレコードがないため、
+  // last_used_dateのデフォルト値を1970-01-01とする（Unixタイムスタンプ）
+  const lastUsedDate = sessionRes.data?.last_used_date ?? '1970-01-01';
   const selectedChannels: SelectedChannel[] = channelsRes.data ?? [];
   if (selectedChannels.length === 0) return [];
 
   const channelIds = selectedChannels.map((c) => c.youtube_channel_id);
 
   const { data: existingPicks } = await db
-    .from("daily_picks")
-    .select("youtube_channel_id, youtube_video_id")
-    .eq("user_id", userId)
-    .eq("pick_date", today)
-    .in("youtube_channel_id", channelIds);
+    .from('daily_picks')
+    .select('youtube_channel_id, youtube_video_id')
+    .eq('user_id', userId)
+    .eq('pick_date', todayDate)
+    .in('youtube_channel_id', channelIds);
 
   const channelToVideoId = new Map<string, string>(
-    (existingPicks ?? []).map((p: { youtube_channel_id: string; youtube_video_id: string }) => [
-      p.youtube_channel_id,
-      p.youtube_video_id,
-    ])
+    (existingPicks ?? []).map(
+      (p: { youtube_channel_id: string; youtube_video_id: string }) => [
+        p.youtube_channel_id,
+        p.youtube_video_id,
+      ],
+    ),
   );
 
   const channelsNeedingPick = selectedChannels.filter(
-    (c) => !channelToVideoId.has(c.youtube_channel_id)
+    (c) => !channelToVideoId.has(c.youtube_channel_id),
   );
 
   if (channelsNeedingPick.length > 0) {
@@ -204,7 +221,7 @@ export async function generateDailyPicks(
           ch.youtube_channel_id,
           playlistId,
           lastUsedDate,
-          accessToken
+          accessToken,
         );
         if (!decision) return null;
 
@@ -213,23 +230,32 @@ export async function generateDailyPicks(
           videoId: decision.videoId,
           reason: decision.reason,
         };
-      })
+      }),
     );
 
     const newPicksToInsert = newPickResults.filter(
-      (r): r is { channelId: string; videoId: string; reason: "new" | "random" } => r !== null
+      (
+        r,
+      ): r is {
+        channelId: string;
+        videoId: string;
+        reason: 'new' | 'random';
+      } => r !== null,
     );
 
     if (newPicksToInsert.length > 0) {
-      await db.from("daily_picks").upsert(
+      await db.from('daily_picks').upsert(
         newPicksToInsert.map((p) => ({
           user_id: userId,
           youtube_channel_id: p.channelId,
           youtube_video_id: p.videoId,
-          pick_date: today,
+          pick_date: todayDate,
           pick_reason: p.reason,
         })),
-        { onConflict: "user_id,youtube_channel_id,pick_date", ignoreDuplicates: true }
+        {
+          onConflict: 'user_id,youtube_channel_id,pick_date',
+          ignoreDuplicates: true,
+        },
       );
 
       for (const p of newPicksToInsert) {
@@ -241,23 +267,37 @@ export async function generateDailyPicks(
   const allVideoIds = Array.from(channelToVideoId.values());
   if (allVideoIds.length === 0) {
     await db
-      .from("user_sessions")
-      .upsert({ user_id: userId, last_used_date: today }, { onConflict: "user_id" });
+      .from('user_sessions')
+      .upsert(
+        { user_id: userId, last_used_date: todayDate },
+        { onConflict: 'user_id' },
+      );
     return [];
   }
 
   const { data: videoRows } = await db
-    .from("videos")
-    .select("youtube_video_id, title, thumbnail_url, duration_seconds, published_at")
-    .in("youtube_video_id", allVideoIds);
+    .from('videos')
+    .select(
+      'youtube_video_id, title, thumbnail_url, duration_seconds, published_at',
+    )
+    .in('youtube_video_id', allVideoIds);
 
   const videoMap = new Map<string, VideoDetail>(
-    (videoRows ?? []).map((v: VideoDetail) => [v.youtube_video_id, v])
+    (videoRows ?? []).map((v: VideoDetail) => [v.youtube_video_id, v]),
   );
 
   await db
-    .from("user_sessions")
-    .upsert({ user_id: userId, last_used_date: today }, { onConflict: "user_id" });
+    .from('user_sessions')
+    .upsert(
+      { user_id: userId, last_used_date: todayDate },
+      { onConflict: 'user_id' },
+    );
 
-  return buildPicks(selectedChannels, channelToVideoId, videoMap, userId, today);
+  return buildPicks(
+    selectedChannels,
+    channelToVideoId,
+    videoMap,
+    userId,
+    todayDate,
+  );
 }
