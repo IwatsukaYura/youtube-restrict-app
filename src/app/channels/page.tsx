@@ -81,7 +81,10 @@ export default function ChannelsPage() {
   };
 
   const toggle = (channelId: string) => {
+    //previous stateに基づいて次のstateを計算
+    //関数型を利用するのは、selectedが最新の状態で更新されることを保証するため
     setSelected((prev) => {
+      //新しいSetを作成して変更を加える（イミュタブルな更新）
       const next = new Set(prev);
       if (next.has(channelId)) next.delete(channelId);
       else next.add(channelId);
