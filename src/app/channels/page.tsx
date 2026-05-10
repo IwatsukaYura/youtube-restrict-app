@@ -93,6 +93,48 @@ export default function ChannelsPage() {
     c.title.toLowerCase().includes(query.toLowerCase()),
   );
 
+  //以下はUI表示ロジック
+  let channelListContent;
+  if (isLoading) {
+    channelListContent = (
+      <div className="py-12 text-center text-sm text-gray-400">
+        読み込み中...
+      </div>
+    );
+  } else if (filteredChannels.length === 0) {
+    channelListContent = (
+      <div className="py-12 text-center text-sm text-gray-400">
+        {channels.length === 0
+          ? 'チャンネルがありません。「チャンネルを同期」を押してください'
+          : '該当するチャンネルがありません'}
+      </div>
+    );
+  } else {
+    channelListContent = filteredChannels.map((channel) => (
+      <label
+        key={channel.youtube_channel_id}
+        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          checked={selected.has(channel.youtube_channel_id)}
+          onChange={() => toggle(channel.youtube_channel_id)}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        {channel.thumbnail_url && (
+          <Image
+            src={channel.thumbnail_url}
+            alt={channel.title}
+            width={32}
+            height={32}
+            className="rounded-full flex-shrink-0"
+          />
+        )}
+        <span className="text-sm text-gray-900 truncate">{channel.title}</span>
+      </label>
+    ));
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -157,46 +199,7 @@ export default function ChannelsPage() {
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto">
-            {isLoading ? (
-              <div className="py-12 text-center text-sm text-gray-400">
-                読み込み中...
-              </div>
-            ) : filteredChannels.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-400">
-                {channels.length === 0
-                  ? 'チャンネルがありません。「チャンネルを同期」を押してください'
-                  : '該当するチャンネルがありません'}
-              </div>
-            ) : (
-              filteredChannels.map((channel) => (
-                <label
-                  key={channel.youtube_channel_id}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(channel.youtube_channel_id)}
-                    onChange={() => toggle(channel.youtube_channel_id)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  {channel.thumbnail_url && (
-                    <Image
-                      src={channel.thumbnail_url}
-                      alt={channel.title}
-                      width={32}
-                      height={32}
-                      className="rounded-full flex-shrink-0"
-                    />
-                  )}
-                  <span className="text-sm text-gray-900 truncate">
-                    {channel.title}
-                  </span>
-                </label>
-              ))
-            )}
-          </div>
+          <div>{channelListContent}</div>
         </div>
 
         <div className="mt-4">
