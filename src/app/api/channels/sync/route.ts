@@ -53,5 +53,22 @@ export async function POST() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const subscribedIds = new Set(subscriptions.map((s) => s.channelId));
+  const channelsToDelete = Array.from(existingMap.keys()).filter(
+    (id) => !subscribedIds.has(id)
+  );
+
+  if (channelsToDelete.length > 0) {
+    const { error: deleteError } = await db
+      .from("channels")
+      .delete()
+      .eq("user_id", user.id)
+      .in("youtube_channel_id", channelsToDelete);
+
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
+  }
+
   return NextResponse.json({ synced: upsertRows.length });
 }
