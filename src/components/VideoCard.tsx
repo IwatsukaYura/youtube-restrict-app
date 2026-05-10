@@ -31,7 +31,7 @@ export default function VideoCard({ pick }: Props) {
 
   return (
     <>
-      <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+      <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
         <button
           className="relative w-full aspect-video bg-gray-100 block"
           onClick={() => setShowModal(true)}
@@ -61,7 +61,7 @@ export default function VideoCard({ pick }: Props) {
           </div>
         </button>
 
-        <div className="p-4">
+        <div className="p-4 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-2">
             {channel.thumbnailUrl && (
               <Image
@@ -79,7 +79,7 @@ export default function VideoCard({ pick }: Props) {
             {video.title}
           </h3>
 
-          <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
             <span>{formatDate(video.publishedAt)}</span>
             <span>{formatDuration(video.durationSeconds)}</span>
           </div>
