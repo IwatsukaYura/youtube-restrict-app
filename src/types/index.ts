@@ -17,6 +17,7 @@ export type Video = {
   title: string;
   thumbnailUrl: string | null;
   durationSeconds: number;
+  isShorts: boolean;
   publishedAt: string;
   cachedAt: string;
 };
@@ -48,5 +49,6 @@ export type YoutubeVideoMeta = {
   title: string;
   thumbnailUrl: string;
   durationSeconds: number;
+  isShorts: boolean;
   publishedAt: string;
 };

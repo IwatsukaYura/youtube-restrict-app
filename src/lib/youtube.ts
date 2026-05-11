@@ -1,7 +1,10 @@
 import type { YoutubeSubscription, YoutubeVideoMeta } from "@/types";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
-const SHORTS_MAX_SECONDS = 60;
+// Reference width for the embed-aspect Shorts probe. Any value in [72, 8192]
+// works; small values keep the API response compact. Aspect ratio is the
+// signal we care about, not the absolute pixel size.
+const EMBED_PROBE_WIDTH = 200;
 
 function parseDuration(iso: string): number {
   const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -124,8 +127,9 @@ export async function fetchVideoMetas(
     const data = (await youtubeGet(
       "/videos",
       {
-        part: "snippet,contentDetails",
+        part: "snippet,contentDetails,player",
         id: batch.join(","),
+        maxWidth: String(EMBED_PROBE_WIDTH),
       },
       accessToken
     )) as {
@@ -137,25 +141,43 @@ export async function fetchVideoMetas(
           publishedAt: string;
           thumbnails: { medium?: { url: string } };
         };
-        contentDetails: { duration: string };
+        contentDetails?: { duration?: string };
+        player?: { embedWidth?: string | number; embedHeight?: string | number };
       }>;
     };
 
-    for (const item of data.items ?? []) {
+    type VideoItem = NonNullable<typeof data.items>[number];
+    type ValidVideoItem = VideoItem & { contentDetails: { duration: string } };
+
+    // Deleted / private / region-blocked / live videos may omit contentDetails.duration.
+    // Skip them so downstream code can rely on a usable duration string.
+    const items = (data.items ?? []).filter((item): item is ValidVideoItem => {
+      if (typeof item.contentDetails?.duration !== "string") {
+        console.warn(`[fetchVideoMetas] skip video without duration: ${item.id}`);
+        return false;
+      }
+      return true;
+    });
+
+    for (const item of items) {
+      const embedWidth = Number(item.player?.embedWidth ?? 0);
+      const embedHeight = Number(item.player?.embedHeight ?? 0);
+      // Shorts use a 9:16 player aspect, so the embed comes back taller than wide.
+      // If the API omits player dimensions for any reason, fall back to false to
+      // avoid over-filtering legitimate videos.
+      const isShorts = embedWidth > 0 && embedHeight > embedWidth;
+
       results.push({
         videoId: item.id,
         channelId: item.snippet.channelId,
         title: item.snippet.title,
         thumbnailUrl: item.snippet.thumbnails.medium?.url ?? "",
         durationSeconds: parseDuration(item.contentDetails.duration),
+        isShorts,
         publishedAt: item.snippet.publishedAt,
       });
     }
   }
 
   return results;
-}
-
-export function isShorts(durationSeconds: number): boolean {
-  return durationSeconds <= SHORTS_MAX_SECONDS;
 }

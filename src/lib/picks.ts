@@ -4,7 +4,6 @@ import {
   fetchRecentVideoIds,
   fetchVideoMetas,
   fetchUploadsPlaylistId,
-  isShorts,
 } from '@/lib/youtube';
 
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -19,6 +18,7 @@ type SelectedChannel = {
 type CachedVideoMeta = {
   youtube_video_id: string;
   duration_seconds: number;
+  is_shorts: boolean;
   published_at: string;
 };
 
@@ -47,6 +47,7 @@ async function cacheVideos(
       title: m.title,
       thumbnail_url: m.thumbnailUrl,
       duration_seconds: m.durationSeconds,
+      is_shorts: m.isShorts,
       published_at: m.publishedAt,
     })),
     { onConflict: 'youtube_video_id', ignoreDuplicates: true },
@@ -66,7 +67,7 @@ async function decideVideoForChannel(
 
   const { data: cached } = await db
     .from('videos')
-    .select('youtube_video_id, duration_seconds, published_at')
+    .select('youtube_video_id, duration_seconds, is_shorts, published_at')
     .in('youtube_video_id', allVideoIds);
 
   const cachedMetas: CachedVideoMeta[] = cached ?? [];
@@ -80,12 +81,13 @@ async function decideVideoForChannel(
       cachedMetas.push({
         youtube_video_id: m.videoId,
         duration_seconds: m.durationSeconds,
+        is_shorts: m.isShorts,
         published_at: m.publishedAt,
       });
     }
   }
 
-  const nonShorts = cachedMetas.filter((m) => !isShorts(m.duration_seconds));
+  const nonShorts = cachedMetas.filter((m) => !m.is_shorts);
   if (nonShorts.length === 0) return null;
 
   const newVideos = nonShorts
