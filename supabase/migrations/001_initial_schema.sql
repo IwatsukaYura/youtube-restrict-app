@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS channels (
 CREATE INDEX IF NOT EXISTS idx_channels_user_selected
   ON channels(user_id, is_selected);
 
+-- is_shorts is set by the app from the YouTube player aspect ratio
+-- (Shorts use a 9:16 embed). Duration alone is unreliable.
 CREATE TABLE IF NOT EXISTS videos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   youtube_video_id text NOT NULL UNIQUE,
@@ -30,12 +32,17 @@ CREATE TABLE IF NOT EXISTS videos (
   title text NOT NULL,
   thumbnail_url text,
   duration_seconds integer NOT NULL,
+  is_shorts boolean NOT NULL DEFAULT false,
   published_at timestamptz NOT NULL,
   cached_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_videos_channel_published
   ON videos(youtube_channel_id, published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_videos_channel_not_shorts
+  ON videos(youtube_channel_id, published_at DESC)
+  WHERE is_shorts = false;
 
 CREATE TABLE IF NOT EXISTS daily_picks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
