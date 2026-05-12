@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { DailyPickWithDetails, YoutubeVideoMeta } from '@/types';
+import type { DailyPickWithDetails } from '@/models/pick';
+import type { YoutubeVideoMeta } from '@/models/youtube';
 import {
   fetchRecentVideoIds,
   fetchVideoMetas,

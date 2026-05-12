@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import VideoCard from '@/components/VideoCard';
 import Header from '@/components/Header';
-import type { DailyPickWithDetails } from '@/types';
+import type { DailyPickWithDetails } from '@/models/pick';
 
 function ExtractTodayDate(): string {
   return new Date().toLocaleDateString('ja-JP', {

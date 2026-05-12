@@ -1,4 +1,4 @@
-import type { YoutubeSubscription, YoutubeVideoMeta } from "@/types";
+import type { YoutubeSubscription, YoutubeVideoMeta } from "@/models/youtube";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 // Reference width for the embed-aspect Shorts probe. Any value in [72, 8192]

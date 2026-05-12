@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import type { DailyPickWithDetails } from "@/types";
+import type { DailyPickWithDetails } from "@/models/pick";
 import VideoModal from "@/components/VideoModal";
 
 type Props = {

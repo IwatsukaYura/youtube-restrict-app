@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { createServiceClient } from '@/lib/supabase';
+import { rowToChannel, type ChannelRow } from '@/lib/db/rows';
 
 export async function GET() {
   const session = await auth();
@@ -22,7 +23,8 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  const channels = ((data ?? []) as ChannelRow[]).map(rowToChannel);
+  return NextResponse.json(channels);
 }
 
 export async function PATCH(req: NextRequest) {

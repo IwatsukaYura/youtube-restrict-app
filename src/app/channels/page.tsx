@@ -3,15 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-type Channel = {
-  id: string;
-  youtube_channel_id: string;
-  title: string;
-  thumbnail_url: string | null;
-  is_selected: boolean;
-  synced_at: string | null;
-};
+import type { Channel } from '@/models/channel';
 
 export default function ChannelsPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -34,7 +26,7 @@ export default function ChannelsPage() {
       setChannels(data);
       setSelected(
         new Set(
-          data.filter((c) => c.is_selected).map((c) => c.youtube_channel_id),
+          data.filter((c) => c.isSelected).map((c) => c.youtubeChannelId),
         ),
       );
     } catch (e) {
@@ -115,18 +107,18 @@ export default function ChannelsPage() {
   } else {
     channelListContent = filteredChannels.map((channel) => (
       <label
-        key={channel.youtube_channel_id}
+        key={channel.youtubeChannelId}
         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
       >
         <input
           type="checkbox"
-          checked={selected.has(channel.youtube_channel_id)}
-          onChange={() => toggle(channel.youtube_channel_id)}
+          checked={selected.has(channel.youtubeChannelId)}
+          onChange={() => toggle(channel.youtubeChannelId)}
           className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-        {channel.thumbnail_url && (
+        {channel.thumbnailUrl && (
           <Image
-            src={channel.thumbnail_url}
+            src={channel.thumbnailUrl}
             alt={channel.title}
             width={32}
             height={32}
@@ -177,7 +169,7 @@ export default function ChannelsPage() {
               <button
                 onClick={() =>
                   setSelected(
-                    new Set(channels.map((c) => c.youtube_channel_id)),
+                    new Set(channels.map((c) => c.youtubeChannelId)),
                   )
                 }
                 className="text-xs text-blue-600 hover:text-blue-800"
